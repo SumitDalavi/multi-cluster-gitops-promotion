@@ -1,0 +1,39 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: frontend-microservices
+  namespace: argocd
+spec:
+  generators:
+  # The cluster generator finds all clusters registered in Argo CD
+  # and filters them based on labels.
+  - clusters:
+      selector:
+        matchExpressions:
+        - key: environment
+          operator: In
+          values:
+          - dev
+          - staging
+          - prod
+  template:
+    metadata:
+      name: 'frontend-{{name}}'
+      labels:
+        environment: '{{metadata.labels.environment}}'
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/example/multi-cluster-gitops-promotion.git
+        targetRevision: HEAD
+        # Dynamically point the path to the overlay matching the cluster's environment label
+        path: manifests/overlays/{{metadata.labels.environment}}
+      destination:
+        server: '{{server}}'
+        namespace: frontend-tier
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+        syncOptions:
+        - CreateNamespace=true

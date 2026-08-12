@@ -1,0 +1,15 @@
+resources:
+- ../../base
+
+namePrefix: dev-
+commonLabels:
+  env: dev
+
+patches:
+- target:
+    kind: Deployment
+    name: frontend
+  patch: |-
+    - op: replace
+      path: /spec/replicas
+      value: 1
