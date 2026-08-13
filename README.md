@@ -52,6 +52,97 @@ Most portfolios simply show "I installed Argo CD and synced one repo." This proj
 └── README.md
 ```
 
+
+## ðŸ“‹ Prerequisites
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| [kubectl](https://kubernetes.io/docs/tasks/tools/) | >= 1.28 | Kubernetes CLI |
+| [kind](https://kind.sigs.k8s.io/) | Latest | Local K8s clusters |
+| [Argo CD CLI](https://argo-cd.readthedocs.io/en/stable/cli_installation/) | >= 2.9 | GitOps CLI |
+| [Helm](https://helm.sh/) | >= 3.x | Package manager |
+| [Kustomize](https://kustomize.io/) | >= 5.x | Manifest customization |
+
+## ðŸš€ Step-by-Step Setup
+
+### Option A: Local Multi-Cluster (kind)
+
+```bash
+# 1. Clone the repository
+git clone https://github.com/SumitDalavi/multi-cluster-gitops-promotion.git
+cd multi-cluster-gitops-promotion
+
+# 2. Create two clusters (simulating dev and prod)
+kind create cluster --name dev-cluster
+kind create cluster --name prod-cluster
+
+# 3. Install Argo CD on the management cluster (dev)
+kubectl config use-context kind-dev-cluster
+kubectl create namespace argocd
+kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
+
+# 4. Wait for Argo CD to be ready
+kubectl wait --for=condition=available deployment/argocd-server -n argocd --timeout=120s
+
+# 5. Register the prod cluster with Argo CD
+argocd cluster add kind-prod-cluster --name prod
+
+# 6. Apply the ApplicationSet (generates apps for both clusters)
+kubectl apply -f argocd/applicationsets/cluster-gitops-generator.yaml
+```
+
+### Option B: Existing Cloud Clusters
+
+```bash
+# Ensure kubectl contexts are configured for both clusters
+kubectl config get-contexts
+# Follow steps 3-6 from Option A
+```
+
+## ðŸ§ª Usage & Demo â€” Promotion Pipeline
+
+### Step 1: Verify applications are synced
+```bash
+argocd app list
+argocd app get dev-app
+argocd app get prod-app
+```
+
+### Step 2: Promote a change from dev to prod
+```bash
+# Update the dev overlay (e.g., new image tag)
+# Edit manifests/overlays/dev/kustomization.yaml
+
+# Dev cluster auto-syncs the change
+argocd app sync dev-app
+
+# After validation, update prod overlay
+# Edit manifests/overlays/prod/kustomization.yaml
+argocd app sync prod-app
+```
+
+### Step 3: Observe the Kustomize overlays
+```bash
+# Preview what each environment deploys
+kustomize build manifests/overlays/dev/
+kustomize build manifests/overlays/prod/
+```
+
+## âœ… Verification
+
+| Check | Command | Expected |
+|-------|---------|----------|
+| Argo CD running | `kubectl get pods -n argocd` | All pods running |
+| Clusters registered | `argocd cluster list` | Both clusters listed |
+| Apps synced | `argocd app list` | Synced & Healthy |
+| Overlays differ | `kustomize build manifests/overlays/dev/` vs `prod/` | Different image tags |
+
+```bash
+# Cleanup
+kind delete cluster --name dev-cluster
+kind delete cluster --name prod-cluster
+```
+
 ## 👨‍💻 Author
 
 *Built to demonstrate platform-scale environment management and GitOps promotion strategies.*
