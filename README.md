@@ -53,7 +53,7 @@ Most portfolios simply show "I installed Argo CD and synced one repo." This proj
 ```
 
 
-## ðŸ“‹ Prerequisites
+## 📋 Prerequisites
 
 | Tool | Version | Purpose |
 |------|---------|---------|
@@ -63,7 +63,7 @@ Most portfolios simply show "I installed Argo CD and synced one repo." This proj
 | [Helm](https://helm.sh/) | >= 3.x | Package manager |
 | [Kustomize](https://kustomize.io/) | >= 5.x | Manifest customization |
 
-## ðŸš€ Step-by-Step Setup
+## 🚀 Step-by-Step Setup
 
 ### Option A: Local Multi-Cluster (kind)
 
@@ -99,7 +99,7 @@ kubectl config get-contexts
 # Follow steps 3-6 from Option A
 ```
 
-## ðŸ§ª Usage & Demo â€” Promotion Pipeline
+## 🧪 Usage & Demo â€” Promotion Pipeline
 
 ### Step 1: Verify applications are synced
 ```bash
@@ -128,7 +128,7 @@ kustomize build manifests/overlays/dev/
 kustomize build manifests/overlays/prod/
 ```
 
-## âœ… Verification
+## ✅ Verification
 
 | Check | Command | Expected |
 |-------|---------|----------|
@@ -145,4 +145,9 @@ kind delete cluster --name prod-cluster
 
 ## 👨‍💻 Author
 
-*Built to demonstrate platform-scale environment management and GitOps promotion strategies.*
+**Sumit Dalavi** — Senior DevSecOps / Platform Engineer
+[GitHub](https://github.com/SumitDalavi) | [LinkedIn](https://in.linkedin.com/in/sumit-dalavi-762838129)
+
+---
+
+*Built with a focus on production-grade patterns, not toy demos.*
