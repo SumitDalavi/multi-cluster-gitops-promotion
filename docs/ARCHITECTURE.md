@@ -1,5 +1,17 @@
 # Architecture: Multi-Cluster GitOps Promotion
 
+## System Diagram
+The following Mermaid.js sequence diagram maps the core workflow and interactions:
+
+```mermaid
+sequenceDiagram
+    CI->>DevRepo: Push Image
+ArgoCD_Dev->>DevCluster: Deploy
+QA->>ProdRepo: Merge PR
+ArgoCD_Prod->>ProdCluster: Deploy
+```
+
+
 ## Environment Promotion via Pull Requests
 In this architecture, promoting a release from `staging` to `prod` doesn't involve running `kubectl apply` or clicking a button in Jenkins. 
 
