@@ -24,10 +24,10 @@ spec:
       source:
         repoURL: https://github.com/example/multi-cluster.git
         targetRevision: HEAD
-        path: manifests/{{env}}
+        path: clusters/{{env}}
       destination:
         server: '{{url}}'
-        namespace: myapp
+        namespace: myapp-{{env}}
       syncPolicy:
         automated:
           prune: true
