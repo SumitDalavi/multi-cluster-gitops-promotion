@@ -1,0 +1,80 @@
+name: GitOps Promotion Pipeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      from_env:
+        description: Source environment
+        required: true
+        default: dev
+        type: choice
+        options: [dev, staging]
+      to_env:
+        description: Target environment
+        required: true
+        type: choice
+        options: [staging, production]
+      image_tag:
+        description: Image tag to promote
+        required: true
+
+jobs:
+  gate:
+    name: Pre-Promotion Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBECONFIG }}
+
+      - name: Validate source health
+        run: |
+          bash scripts/validate-health.sh ${{ inputs.from_env }} myapp
+        env:
+          PROMETHEUS_URL: ${{ vars.PROMETHEUS_URL }}
+          MAX_ERROR_RATE: "0.01"
+
+  promote:
+    name: Promote to ${{ inputs.to_env }}
+    runs-on: ubuntu-latest
+    needs: gate
+    environment:
+      name: ${{ inputs.to_env }}
+      url: https://${{ inputs.to_env }}.example.com
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITOPS_TOKEN }}
+
+      - name: Promote image
+        run: bash scripts/promote.sh ${{ inputs.from_env }} ${{ inputs.to_env }} ${{ inputs.image_tag }}
+
+      - name: Wait for Argo CD sync
+        run: |
+          sleep 30
+          kubectl wait application myapp-${{ inputs.to_env }}             -n argocd --for=jsonpath='{.status.sync.status}'=Synced --timeout=300s
+        continue-on-error: true
+
+  verify:
+    name: Post-Promotion Verification
+    runs-on: ubuntu-latest
+    needs: promote
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Verify health in target
+        run: bash scripts/validate-health.sh ${{ inputs.to_env }} myapp
+        env:
+          HEALTH_TIMEOUT: "300"
+
+      - name: Summary
+        run: |
+          echo "## Promotion Complete" >> $GITHUB_STEP_SUMMARY
+          echo "- **From:** ${{ inputs.from_env }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **To:** ${{ inputs.to_env }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Tag:** ${{ inputs.image_tag }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** PASSED" >> $GITHUB_STEP_SUMMARY
