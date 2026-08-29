@@ -1,6 +1,7 @@
 # Multi-Cluster GitOps Promotion Platform 🌍🔄
 
-> A platform-scale GitOps architecture using Argo CD ApplicationSets and Kustomize to manage environment promotion (Dev → Stage → Prod) across distinct Kubernetes clusters.
+> **Maturity:** Lab / Reference Implementation
+> _A platform-scale GitOps architecture using Argo CD ApplicationSets and Kustomize to manage environment promotion (Dev → Stage → Prod) across distinct Kubernetes clusters._
 
 ## The Problem
 
@@ -148,6 +149,22 @@ kind delete cluster --name prod-cluster
 **Sumit Dalavi** — Senior DevSecOps / Platform Engineer
 [GitHub](https://github.com/SumitDalavi) | [LinkedIn](https://in.linkedin.com/in/sumit-dalavi-762838129)
 
----
+## 📚 Documentation
 
-*Built with a focus on production-grade patterns, not toy demos.*
+- [Architecture](docs/ARCHITECTURE.md) — System diagram and component details
+- [Promotion Runbook](docs/PROMOTION-RUNBOOK.md) — Step-by-step promotion guide
+- [Runbook](docs/runbook.md) — Setup, commands, and expected outputs
+- [Decisions](docs/decisions.md) — ADRs for multi-cluster routing
+- [Changelog](docs/changelog.md) — Change history
+
+## Mock Boundaries (Honest Scope)
+
+| What | Status | Details |
+|---|---|---|
+| Kubernetes Clusters | **Real** | Spin up `dev-cluster` and `prod-cluster` via local `kind`. |
+| GitOps Sync | **Real** | ArgoCD actively pulls and syncs Kustomize manifests. |
+| Pull Requests | **Simulated** | Bash script mimics the code change, PR merge, and Git push sequence. |
+
+## 🔗 Related Projects
+
+- [`k8s-gateway-api-platform`](../k8s-gateway-api-platform/) — Can be deployed by this ApplicationSet for cluster-specific routing rules.
