@@ -1,11 +1,13 @@
 > **NOTE:** This repository is an archival lab or partial prototype. It is not actively maintained and should not be used as a reference for production-grade deployments or performance benchmarks.
 
-
 # Multi-Cluster GitOps Promotion Platform 🌍🔄
 
-[![Release](https://img.shields.io/github/v/release/SumitDalavi/multi-cluster-gitops-promotion)](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/releases)
+[![CI Pipeline](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/SumitDalavi/multi-cluster-gitops-promotion?color=0969da&label=release&logo=github)](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/releases)
 [![Release Workflow](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/actions/workflows/release.yml/badge.svg)](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/actions/workflows/release.yml)
-
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)](https://www.python.org)
+[![SBOM](https://img.shields.io/badge/SBOM-SPDX%202.3-blueviolet?logo=spdx)](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/releases/tag/v0.2.0)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 > **Maturity:** Lab / Reference Implementation
 > _A platform-scale GitOps architecture using Argo CD ApplicationSets and Kustomize to manage environment promotion (Dev → Stage → Prod) across distinct Kubernetes clusters._
@@ -59,7 +61,6 @@ Most portfolios simply show "I installed Argo CD and synced one repo." This proj
 ├── docs/ARCHITECTURE.md
 └── README.md
 ```
-
 
 ## 📋 Prerequisites
 
@@ -174,7 +175,6 @@ Promote changes through Git branches and verify automated pull-request synchroni
 ### Tier 3: Enterprise Multi-Cluster Fleet Promotion
 Automate promotion gates across heterogeneous Kubernetes clusters with automated health checks.
 - **Distribution:** Release manifests and verified SPDX SBOM available on [GitHub Releases](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/releases).
-
 
 ## 📚 Documentation
 
