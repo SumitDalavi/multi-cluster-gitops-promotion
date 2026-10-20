@@ -156,29 +156,25 @@ kind delete cluster --name prod-cluster
 **Sumit Dalavi** — Senior DevSecOps / Platform Engineer
 [GitHub](https://github.com/SumitDalavi) | [LinkedIn](https://in.linkedin.com/in/sumit-dalavi-762838129)
 
-## 🚀 Progressive Credential Loading & Execution Tiers
+## 🛠️ Verification & Deployment Tiers
 
-This project implements **Progressive Credential Loading (PCL)**, allowing it to run immediately out-of-the-box without external dependencies while seamlessly upgrading as credentials are provided.
+This multi-cluster GitOps promotion pipeline supports progressive stages from local dry-run simulation to automated fleet-wide promotion.
 
-### Tier 1: Zero-Config Mock Mode (Default)
-Ideal for CI, testing, and rapid local evaluation.
-- **Execution:** Run with default configuration (`cp .env.example .env`). Zero API keys, databases, or cloud credentials required.
-- **Fallback Behavior:** In-memory caches, deterministic offline heuristics, mock vector embeddings, and local mock storage are automatically used.
-- **Health Verification:** Endpoints report `{"mode": "mock"}` for unconfigured dependencies.
+### Tier 1: Local Kustomize / Dry-Run Validation (Default)
+Render and validate manifests locally without an active cluster connection.
+- **Execution:** `kustomize build environments/dev` and `kustomize build environments/prod`.
+- **Behavior:** Verifies environment overlays, patches, and resource schemas statically.
+- **Zero Cluster Dependencies:** No connection to central ArgoCD or target clusters required.
 
-### Tier 2: Local Development with Live Services
-Connect specific external services while keeping others mocked.
-- **Execution:** Provide credentials in `.env` for the services you want active (e.g., `ARGOCD_SERVER, ARGOCD_AUTH_TOKEN, TARGET_ENVIRONMENT`).
-- **Progressive Upgrade:** The runtime inspects environment variables on boot and dynamically promotes only configured modules to live mode.
-- **Safe Fallback:** Any missing credentials automatically remain on mock fallbacks with no crashes or missing service errors.
+### Tier 2: Staging GitOps Promotion
+Promote changes through Git branches and verify automated pull-request synchronization in staging environments.
+- **Execution:** Push configuration changes to environment branches (e.g. `staging`).
+- **Behavior:** ArgoCD detects manifest updates and applies automated drift detection and synchronisation.
 
-### Tier 3: Production Hardened
-Enterprise deployment with production-grade backends, security scans, and container distributions.
-- **Release Distribution:** Download standalone release bundle and verified checksums:
-  ```bash
-  gh release download v0.2.0 --repo SumitDalavi/multi-cluster-gitops-promotion
-  ```
-- **Integrity & Security:** Checksums and SPDX SBOM (`sbom.spdx.json`) available on [GitHub Releases](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/releases).
+### Tier 3: Enterprise Multi-Cluster Fleet Promotion
+Automate promotion gates across heterogeneous Kubernetes clusters with automated health checks.
+- **Distribution:** Release manifests and verified SPDX SBOM available on [GitHub Releases](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/releases).
+
 
 ## 📚 Documentation
 
