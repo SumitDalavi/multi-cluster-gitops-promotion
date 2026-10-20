@@ -2,5 +2,7 @@ import os
 import pytest
 
 def test_gitops_directories_exist():
-    apps_dir = os.path.join(os.path.dirname(__file__), '..', 'apps')
-    assert os.path.exists(apps_dir), "Apps directory should exist"
+    clusters_dir = os.path.join(os.path.dirname(__file__), '..', 'clusters')
+    manifests_dir = os.path.join(os.path.dirname(__file__), '..', 'manifests')
+    assert os.path.exists(clusters_dir), "Clusters directory should exist"
+    assert os.path.exists(manifests_dir), "Manifests directory should exist"
