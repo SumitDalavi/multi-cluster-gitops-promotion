@@ -7,8 +7,7 @@
 [![SBOM](https://img.shields.io/badge/SBOM-SPDX%202.3-blueviolet?logo=spdx)](https://github.com/SumitDalavi/multi-cluster-gitops-promotion/releases/tag/v0.2.0)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-> **Maturity:** Lab / Reference Implementation
-> _A platform-scale GitOps architecture using Argo CD ApplicationSets and Kustomize to manage environment promotion (Dev → Stage → Prod) across distinct Kubernetes clusters._
+> A platform-scale GitOps architecture using Argo CD ApplicationSets and Kustomize to manage environment promotion (Dev → Stage → Prod) across distinct Kubernetes clusters.
 
 ## The Problem
 
