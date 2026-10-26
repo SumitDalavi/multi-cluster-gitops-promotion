@@ -1,0 +1,77 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-helm-services-matrix
+  namespace: argocd
+  labels:
+    tier: platform-engineering
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          - list:
+              elements:
+                - chart: k8s-golden-path-provisioner
+                  releaseName: golden-path-operator
+                  chartVersion: "0.2.0"
+                  namespace: golden-path-system
+                - chart: cloud-native-secrets-identity
+                  releaseName: secrets-identity-operator
+                  chartVersion: "0.2.0"
+                  namespace: external-secrets
+          - list:
+              elements:
+                - env: dev
+                  cluster: in-cluster
+                  server: https://kubernetes.default.svc
+                  autoSync: true
+                - env: staging
+                  cluster: staging-cluster-us-east
+                  server: https://staging-k8s.internal.net:6443
+                  autoSync: true
+                - env: prod
+                  cluster: prod-cluster-us-east
+                  server: https://prod-k8s.internal.net:6443
+                  autoSync: false
+  template:
+    metadata:
+      name: '{{.chart}}-{{.env}}'
+      labels:
+        environment: '{{.env}}'
+        chart: '{{.chart}}'
+        packaging: helm-oci
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: oci://ghcr.io/sumitdalavi
+        chart: '{{.chart}}'
+        targetRevision: '{{.chartVersion}}'
+        helm:
+          releaseName: '{{.releaseName}}'
+          valueFiles:
+            - '$values/clusters/{{.env}}/{{.chart}}/values.yaml'
+      destination:
+        server: '{{.server}}'
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+        retry:
+          limit: 3
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 1m
+  templatePatch: |
+    {{- if .autoSync }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+    {{- end }}

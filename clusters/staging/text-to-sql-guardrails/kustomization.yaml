@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: sql-guardrails
+resources:
+  - https://github.com/SumitDalavi/text-to-sql-guardrails.git//deploy/k8s/overlays/staging?ref=master
+commonLabels:
+  app.kubernetes.io/name: text-to-sql-guardrails
+  app.kubernetes.io/part-of: portfolio-gitops
+  app.kubernetes.io/managed-by: argocd
+  environment: staging
+images:
+  - name: ghcr.io/sumitdalavi/text-to-sql-guardrails
+    newTag: v0.2.0
+replicas:
+  - name: text-to-sql-guardrails
+    count: 2

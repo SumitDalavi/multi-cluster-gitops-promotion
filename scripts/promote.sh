@@ -1,47 +1,33 @@
 #!/usr/bin/env bash
-# Promote an image tag from one environment to the next
-# Usage: ./scripts/promote.sh <from-env> <to-env> <image-tag>
 set -euo pipefail
 
-FROM_ENV="${1:?Usage: $0 <from-env> <to-env> <image-tag>}"
-TO_ENV="${2:?}"
-IMAGE_TAG="${3:?}"
-APP="${APP:-myapp}"
+APP_NAME="${1:?Usage: $0 <app-name> <target-env> <image-tag>}"
+TARGET_ENV="${2:?Target environment required (dev|staging|prod)}"
+IMAGE_TAG="${3:?Image tag required (e.g. v0.2.0)}"
 
-log() { echo "[promote] $*"; }
+echo "=== Promoting ${APP_NAME} to ${TARGET_ENV} with tag ${IMAGE_TAG} ==="
 
-OVERLAY_DIR="overlays/${TO_ENV}"
-[[ -d "$OVERLAY_DIR" ]] || { log "ERROR: overlay dir $OVERLAY_DIR not found"; exit 1; }
-
-log "Promoting $APP from $FROM_ENV → $TO_ENV (tag: $IMAGE_TAG)"
-
-# Validate image exists and health check passed in source environment
-bash scripts/validate-health.sh "$FROM_ENV" "$APP" || {
-    log "FAIL: Health check failed in $FROM_ENV — promotion blocked"
-    exit 1
-}
-
-# Update the image tag in the target overlay's kustomization
-KUSTOMIZE_FILE="$OVERLAY_DIR/kustomization.yaml"
-if grep -q "newTag:" "$KUSTOMIZE_FILE"; then
-    sed -i "s|newTag:.*|newTag: "$IMAGE_TAG"|g" "$KUSTOMIZE_FILE"
+# Dynamically resolve overlay directory (Hub vs App repo)
+if [[ -d "clusters/${TARGET_ENV}/${APP_NAME}" ]]; then
+  OVERLAY_DIR="clusters/${TARGET_ENV}/${APP_NAME}"
+elif [[ -d "deploy/k8s/overlays/${TARGET_ENV}" ]]; then
+  OVERLAY_DIR="deploy/k8s/overlays/${TARGET_ENV}"
 else
-    cat >> "$KUSTOMIZE_FILE" << EOF
-
-images:
-  - name: myapp
-    newTag: "$IMAGE_TAG"
-EOF
+  echo "Error: Neither clusters/${TARGET_ENV}/${APP_NAME} nor deploy/k8s/overlays/${TARGET_ENV} exists."
+  exit 1
 fi
 
-log "Updated $KUSTOMIZE_FILE with tag: $IMAGE_TAG"
+echo "Target overlay directory: ${OVERLAY_DIR}"
 
-# Commit and push (Argo CD will sync automatically)
-git config user.name  "GitOps Bot"
-git config user.email "gitops@example.com"
-git add "$KUSTOMIZE_FILE"
-git commit -m "chore: promote $APP to $TO_ENV (tag: $IMAGE_TAG)" || { log "Nothing to commit"; exit 0; }
-git push origin main
+# 1. Update Kustomize image tag
+cd "${OVERLAY_DIR}"
+kustomize edit set image "ghcr.io/sumitdalavi/${APP_NAME}=ghcr.io/sumitdalavi/${APP_NAME}:${IMAGE_TAG}"
 
-log "Promotion commit pushed. Argo CD will sync $TO_ENV shortly."
-log "Watch: kubectl get applications -n argocd"
+# 2. Validate Kustomize build
+kustomize build . > /dev/null
+echo "Kustomize build validation passed."
+
+# 3. Display promotion diff
+git status --short
+
+echo "=== Promotion staged successfully for ${APP_NAME} (${TARGET_ENV} -> ${IMAGE_TAG}) ==="

@@ -1,0 +1,89 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: distributed-services-matrix
+  namespace: argocd
+  labels:
+    tier: distributed-systems
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          # Generator A: List of target microservices & published OCI image tags
+          - list:
+              elements:
+                - app: rate-limiter-service
+                  imageTag: v0.2.0
+                  namespace: rate-limiter
+                - app: distributed-job-scheduler
+                  imageTag: v0.2.0
+                  namespace: job-scheduler
+                - app: event-sourced-audit-log
+                  imageTag: v0.2.0
+                  namespace: audit-log
+                - app: idempotent-payment-ledger
+                  imageTag: v0.2.0
+                  namespace: payment-ledger
+          # Generator B: List of clusters/environments
+          - list:
+              elements:
+                - env: dev
+                  cluster: in-cluster
+                  server: https://kubernetes.default.svc
+                  autoSync: true
+                - env: staging
+                  cluster: staging-cluster-us-east
+                  server: https://staging-k8s.internal.net:6443
+                  autoSync: true
+                - env: prod
+                  cluster: prod-cluster-us-east
+                  server: https://prod-k8s.internal.net:6443
+                  autoSync: false # Production requires manual approval / gated PR
+  template:
+    metadata:
+      name: '{{.app}}-{{.env}}'
+      labels:
+        environment: '{{.env}}'
+        application: '{{.app}}'
+        tier: distributed-systems
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/SumitDalavi/multi-cluster-gitops-promotion.git
+        targetRevision: master # Centralized GitOps Hub repository
+        path: 'clusters/{{.env}}/{{.app}}'
+        kustomize:
+          images:
+            - 'ghcr.io/sumitdalavi/{{.app}}:{{.imageTag}}'
+      destination:
+        server: '{{.server}}'
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+          - PrunePropagationPolicy=foreground
+          - RespectIgnoreDifferences=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas # Allows HPA to manage replicas without drift
+  templatePatch: |
+    {{- if .autoSync }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+    {{- end }}

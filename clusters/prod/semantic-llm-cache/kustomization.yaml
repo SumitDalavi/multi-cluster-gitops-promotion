@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: llm-cache
+resources:
+  - https://github.com/SumitDalavi/semantic-llm-cache.git//deploy/k8s/overlays/prod?ref=master
+commonLabels:
+  app.kubernetes.io/name: semantic-llm-cache
+  app.kubernetes.io/part-of: portfolio-gitops
+  app.kubernetes.io/managed-by: argocd
+  environment: prod
+images:
+  - name: ghcr.io/sumitdalavi/semantic-llm-cache
+    newTag: v0.2.0
+replicas:
+  - name: semantic-llm-cache
+    count: 3

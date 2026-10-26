@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: payment-ledger
+resources:
+  - https://github.com/SumitDalavi/idempotent-payment-ledger.git//deploy/k8s/overlays/staging?ref=master
+commonLabels:
+  app.kubernetes.io/name: idempotent-payment-ledger
+  app.kubernetes.io/part-of: portfolio-gitops
+  app.kubernetes.io/managed-by: argocd
+  environment: staging
+images:
+  - name: ghcr.io/sumitdalavi/idempotent-payment-ledger
+    newTag: v0.2.0
+replicas:
+  - name: idempotent-payment-ledger
+    count: 2

@@ -1,0 +1,95 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: ai-services-matrix
+  namespace: argocd
+  labels:
+    tier: ai-devsecops-systems
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    - matrix:
+        generators:
+          # Generator A: List of target AI/DevSecOps microservices & published OCI image tags
+          - list:
+              elements:
+                - app: semantic-llm-cache
+                  imageTag: v0.2.0
+                  namespace: llm-cache
+                - app: ai-devsecops-agent-mcp
+                  imageTag: v0.2.0
+                  namespace: ai-devsecops
+                - app: text-to-sql-guardrails
+                  imageTag: v0.2.0
+                  namespace: sql-guardrails
+                - app: nhi-agent-access-governance
+                  imageTag: v0.2.0
+                  namespace: nhi-governance
+                - app: finops-cost-dashboard
+                  imageTag: v0.2.0
+                  namespace: finops-system
+                - app: ai-control-plane-demo
+                  imageTag: v0.2.0
+                  namespace: ai-control-plane
+          # Generator B: List of clusters/environments
+          - list:
+              elements:
+                - env: dev
+                  cluster: in-cluster
+                  server: https://kubernetes.default.svc
+                  autoSync: true
+                - env: staging
+                  cluster: staging-cluster-us-east
+                  server: https://staging-k8s.internal.net:6443
+                  autoSync: true
+                - env: prod
+                  cluster: prod-cluster-us-east
+                  server: https://prod-k8s.internal.net:6443
+                  autoSync: false # Production requires manual approval / gated PR
+  template:
+    metadata:
+      name: '{{.app}}-{{.env}}'
+      labels:
+        environment: '{{.env}}'
+        application: '{{.app}}'
+        tier: ai-systems
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/SumitDalavi/multi-cluster-gitops-promotion.git
+        targetRevision: master # Centralized GitOps Hub repository
+        path: 'clusters/{{.env}}/{{.app}}'
+        kustomize:
+          images:
+            - 'ghcr.io/sumitdalavi/{{.app}}:{{.imageTag}}'
+      destination:
+        server: '{{.server}}'
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+          - PrunePropagationPolicy=foreground
+          - RespectIgnoreDifferences=true
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+      ignoreDifferences:
+        - group: apps
+          kind: Deployment
+          jsonPointers:
+            - /spec/replicas
+  templatePatch: |
+    {{- if .autoSync }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+    {{- end }}

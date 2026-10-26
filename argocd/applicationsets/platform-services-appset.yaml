@@ -1,0 +1,79 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: platform-services-matrix
+  namespace: argocd
+  labels:
+    tier: platform-engineering
+spec:
+  goTemplate: true
+  goTemplateOptions: ["missingkey=error"]
+  generators:
+    # 1. Kustomize-based platform operators and controllers
+    - matrix:
+        generators:
+          - list:
+              elements:
+                - app: k8s-secret-rotation-operator
+                  imageTag: v0.2.0
+                  namespace: secret-rotation-system
+                - app: k8s-admission-webhook-from-scratch
+                  imageTag: v0.2.0
+                  namespace: admission-webhook-system
+                - app: k8s-gateway-api-platform
+                  imageTag: v0.2.0
+                  namespace: gateway-system
+          - list:
+              elements:
+                - env: dev
+                  cluster: in-cluster
+                  server: https://kubernetes.default.svc
+                  autoSync: true
+                - env: staging
+                  cluster: staging-cluster-us-east
+                  server: https://staging-k8s.internal.net:6443
+                  autoSync: true
+                - env: prod
+                  cluster: prod-cluster-us-east
+                  server: https://prod-k8s.internal.net:6443
+                  autoSync: false
+  template:
+    metadata:
+      name: '{{.app}}-{{.env}}'
+      labels:
+        environment: '{{.env}}'
+        application: '{{.app}}'
+        tier: platform-infrastructure
+      finalizers:
+        - resources-finalizer.argocd.argoproj.io
+    spec:
+      project: default
+      source:
+        repoURL: https://github.com/SumitDalavi/multi-cluster-gitops-promotion.git
+        targetRevision: master
+        path: 'clusters/{{.env}}/{{.app}}'
+        kustomize:
+          images:
+            - 'ghcr.io/sumitdalavi/{{.app}}:{{.imageTag}}'
+      destination:
+        server: '{{.server}}'
+        namespace: '{{.namespace}}'
+      syncPolicy:
+        syncOptions:
+          - CreateNamespace=true
+          - ApplyOutOfSyncOnly=true
+          - PrunePropagationPolicy=foreground
+        retry:
+          limit: 5
+          backoff:
+            duration: 5s
+            factor: 2
+            maxDuration: 3m
+  templatePatch: |
+    {{- if .autoSync }}
+    spec:
+      syncPolicy:
+        automated:
+          prune: true
+          selfHeal: true
+    {{- end }}

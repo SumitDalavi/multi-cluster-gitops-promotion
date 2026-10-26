@@ -1,10 +1,18 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
-  - ../../manifests/dev
-namePrefix: prod-
-commonLabels:
-  env: prod
-replicas:
-  - name: myapp
-    count: 5
+  - k8s-secret-rotation-operator
+  - k8s-admission-webhook-from-scratch
+  - k8s-gateway-api-platform
+  - rate-limiter-service
+  - distributed-job-scheduler
+  - event-sourced-audit-log
+  - idempotent-payment-ledger
+  - semantic-llm-cache
+  - ai-devsecops-agent-mcp
+  - text-to-sql-guardrails
+  - nhi-agent-access-governance
+  - finops-cost-dashboard
+  - ai-control-plane-demo
+  - k8s-golden-path-provisioner
+  - cloud-native-secrets-identity

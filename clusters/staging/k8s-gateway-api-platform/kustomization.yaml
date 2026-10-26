@@ -1,0 +1,16 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: gateway-system
+resources:
+  - https://github.com/SumitDalavi/k8s-gateway-api-platform.git//deploy/k8s/overlays/staging?ref=master
+commonLabels:
+  app.kubernetes.io/name: k8s-gateway-api-platform
+  app.kubernetes.io/part-of: portfolio-gitops
+  app.kubernetes.io/managed-by: argocd
+  environment: staging
+images:
+  - name: ghcr.io/sumitdalavi/k8s-gateway-api-platform
+    newTag: v0.2.0
+replicas:
+  - name: k8s-gateway-api-platform
+    count: 2
