@@ -44,3 +44,27 @@ graph TD
 - **Tier 1 (Offline Validation):** Syntax validation, static policy checks (`opa test`, `kyverno test`, `terraform fmt -check`), and schema verification without cloud dependencies.
 - **Tier 2 (Sandbox Emulation):** Automated testing against local Kind clusters or isolated development namespaces.
 - **Tier 3 (Production GitOps):** Automated deployment via GitOps controllers (ArgoCD / Flux) or infrastructure pipelines with cryptographically signed release manifests and SPDX SBOMs.
+
+## Enterprise Multi-Cluster Catalog Architecture (v0.2.1)
+
+```mermaid
+graph TD
+    Root[Master App-of-Apps: root-application.yaml] --> AppSet1[platform-services-appset]
+    Root --> AppSet2[platform-helm-services-appset]
+    Root --> AppSet3[distributed-services-appset]
+    Root --> AppSet4[ai-services-appset]
+    
+    AppSet1 -->|Matrix| DevCluster[Dev: in-cluster]
+    AppSet1 -->|Matrix| StagingCluster[Staging: staging-k8s:6443]
+    AppSet1 -->|Matrix| ProdCluster[Prod: prod-k8s:6443]
+    
+    AppSet3 -->|Matrix| DevCluster
+    AppSet3 -->|Matrix| StagingCluster
+    AppSet3 -->|Matrix| ProdCluster
+```
+
+### Key Catalog Features
+1. **Root App-of-Apps:** Single master declaration (`root-application.yaml`) synchronizing all four domain ApplicationSets.
+2. **Matrix Generation:** Cartesian product of target microservices × cluster environments (`dev`, `staging`, `prod`).
+3. **templatePatch Gating:** Automatically injects `automated: {prune: true, selfHeal: true}` for non-production tiers, strictly requiring manual PR approvals for production.
+4. **Dual-Engine Reconciliation:** Reconciles OCI Helm charts directly from `oci://ghcr.io/sumitdalavi` alongside Git-tracked Kustomize overlays.

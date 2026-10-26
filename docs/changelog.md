@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.1] - 2026-10-27
+### Added
+- **Master Root App-of-Apps:** Added `argocd/root-application.yaml` managing all catalog ApplicationSets.
+- **Dynamic ApplicationSet Matrices:** Added 4 ApplicationSets (`platform-services`, `platform-helm-services`, `distributed-services`, `ai-services`) utilizing `goTemplate: true` and `templatePatch`.
+- **45 Centralized Cluster Overlays:** Configured overlays across `clusters/{dev,staging,prod}` for 15 microservices with per-environment replica counts and resource bounds.
+- **Direct Application CRDs:** Added 15 standalone application manifests in `argocd/apps/`.
+- **Zero-Drift Promotion CLI:** Modernized `scripts/promote.sh` with dynamic overlay resolution, native `kustomize edit set image`, and dry-run validation.
+- **Catalog Conformance Validator:** Added `scripts/validate-catalog.sh` testing YAML syntax, immutable tags, and Kustomize builds.
+- **Local Kind Bootstrap:** Added `scripts/setup-hub-kind.sh` for single-command ArgoCD Kind cluster provisioning.
+
+
 ## [0.2.0] - 2026-10-20
 ### Added
 - **Multi-Tier Verification:** Staged validation architecture (local static linting, sandbox cluster testing, GitOps production rollout).

@@ -21,3 +21,12 @@ We chose Kustomize overlays over Helm templates.
 - **Consequences:** 
   - *Pros:* Zero cloud credentials required for CI validation; verifiable supply-chain integrity via Syft SBOMs.
   - *Cons:* Requires maintaining local test fixtures and mock plan inputs.
+
+## ADR-003: Hub-and-Spoke ApplicationSet Matrix & Centralized Overlays
+- **Date:** 2026-10-27
+- **Status:** Accepted
+- **Context:** Managing continuous deployments across 15 microservices and 3 cluster tiers required an automated control plane without causing batch-push timestamp churn in application source repositories.
+- **Decision:** Centralize cluster connection endpoints, matrix ApplicationSets, and environment overlays in `multi-cluster-gitops-promotion`. Use ArgoCD matrix generators with `goTemplate: true` and `templatePatch` to inject automated self-healing in `dev`/`staging` while enforcing gated PRs in `prod`.
+- **Consequences:**
+  - *Pros:* Decouples deployment topology from service source code; prevents timestamp pollution; provides single-pane-of-glass GitOps visibility.
+  - *Cons:* Requires catalog maintainers to update centralized overlay images during promotion workflows.

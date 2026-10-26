@@ -1,26 +1,41 @@
-# GitOps Promotion Runbook
+# GitOps Promotion Runbook (v0.2.1)
 
 ## Normal Promotion Flow
 ```
-dev → staging: Automated on every main branch push
-staging → production: Manual via workflow_dispatch with approval gate
+dev → staging: Automated on main branch push via ArgoCD selfHeal
+staging → production: Gated PR promotion with manual review & approval gate
 ```
 
-## Manual Emergency Promotion
+## Catalog Automated Promotion CLI
+Use the standardized promotion script to promote any catalog microservice between cluster tiers:
 ```bash
-APP=myapp bash scripts/promote.sh staging production <sha>
+# Promote a specific microservice from staging to production
+APP=rate-limiter-service bash scripts/promote.sh staging prod v0.2.0
+
+# Promote an OCI Helm platform component
+APP=k8s-golden-path-provisioner bash scripts/promote.sh dev staging v0.2.0
 ```
 
-## Rollback
+## Centralized Overlay Structure
+Overlays are centrally maintained in `clusters/{dev,staging,prod}/<service-name>/`:
+```
+clusters/
+├── dev/        # kubernetes.default.svc (automated selfHeal)
+├── staging/    # staging-k8s:6443 (automated selfHeal)
+└── prod/       # prod-k8s:6443 (manual sync / gated PR)
+```
+
+## Rollback Procedure
 ```bash
-# Update the overlay to the previous tag
-sed -i "s|newTag:.*|newTag: "<previous-tag>"|" overlays/production/kustomization.yaml
-git commit -am "revert: rollback production to <previous-tag>"
-git push
-# Argo CD auto-syncs within 3 minutes
+# Update the target service overlay image tag to previous stable version
+cd clusters/prod/<service-name>
+kustomize edit set image ghcr.io/sumitdalavi/<service-name>=ghcr.io/sumitdalavi/<service-name>:<previous-tag>
+git commit -am "revert: rollback <service-name> in prod to <previous-tag>"
+git push origin master
+# Argo CD synchronizes and verifies zero-drift
 ```
 
-## Promotion Gates
-- Source environment must be Argo CD Healthy
-- HTTP error rate < 1% over 5min window
-- All pods in target Ready
+## Promotion Verification Gates
+- Source environment Application status is `Healthy` and `Synced`
+- HTTP 5xx error budget consumption < 0.5% over 5-minute window
+- All Spoke pods report 100% Ready status

@@ -68,3 +68,14 @@ gh release view v0.2.0 --repo SumitDalavi/multi-cluster-gitops-promotion
 gh release download v0.2.0 --repo SumitDalavi/multi-cluster-gitops-promotion --pattern "sbom.spdx.json"
 cat sbom.spdx.json | jq .spdxVersion
 ```
+
+### Catalog Conformance & Validation (v0.2.1)
+
+Run automated catalog linting and Kustomize overlay builds:
+```bash
+# Validate all 45 cluster overlays, ApplicationSets, and root App-of-Apps
+bash scripts/validate-catalog.sh
+
+# Single-command bootstrap of local Kind cluster with ArgoCD and root app
+bash scripts/setup-hub-kind.sh
+```
